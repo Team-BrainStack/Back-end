@@ -3,6 +3,7 @@ import { Hono } from "hono";
 import { authenticationRoutes } from "./routes/authentication/index.js";
 import { cors } from "hono/cors";
 import { webClientUrl } from "./utils/environment/index.js";
+import { logger } from "hono/logger";
 
 
 
@@ -18,6 +19,8 @@ allRoutes.use(
     maxAge: 600,
   }),
 );
+
+allRoutes.use(logger());
 
 allRoutes.route("/authentications", authenticationRoutes
 );

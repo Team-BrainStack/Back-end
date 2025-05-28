@@ -1,6 +1,5 @@
 import type { Session, User } from "better-auth";
 import { createMiddleware } from "hono/factory";
-
 import { HTTPException } from "hono/http-exception";
 import { Hono } from "hono";
 import { auth } from "../../utils/auth.js";
@@ -10,6 +9,7 @@ export type SecureSession = {
   Variables: {
     user: User;
     session: Session;
+    userId: string;
   };
 };
 
@@ -36,6 +36,7 @@ export const authenticationMiddleware = createMiddleware<SecureSession>(async (c
 
   context.set("user", session.user as User);
   context.set("session", session.session as Session);
-
+  context.set("userId", session.user.id);
+  
   return await next();
 });

@@ -1,14 +1,13 @@
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
-
 import { username } from "better-auth/plugins";
-import { betterAuthSecret, serverUrl, webClientUrl } from "./environment/index.js";
+import { betterAuthSecret, serveUrl, webClientUrl } from "./environment/index.js";
 import { prismaClient } from "../integrations/prisma/index.js";
 
 
 
 export const auth = betterAuth({
-  baseURL: serverUrl,
+  baseURL: serveUrl,
   basePath: "/auth",
   trustedOrigins: [webClientUrl],
   secret: betterAuthSecret,
