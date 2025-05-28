@@ -6,7 +6,7 @@ import { prismaClient } from "../integrations/prisma/index.js";
 
 
 
-export const auth = betterAuth({
+const auth = betterAuth({
   baseURL: serveUrl,
   basePath: "/auth",
   trustedOrigins: [webClientUrl],
@@ -45,3 +45,4 @@ advanced: {
   plugins: [username()]
 });
 
+export default auth;

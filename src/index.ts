@@ -22,14 +22,11 @@ allRoutes.use(
 
 allRoutes.use(logger());
 
-allRoutes.route("/authentications", authenticationRoutes
+allRoutes.route("/auth", authenticationRoutes
 );
 
-allRoutes.get("/hi", (c) => {
-  return c.text("Welcome to the Authentication Service!");
-});
 
 serve(allRoutes, ({ port }) => {
-  console.log(`\tRunning at http://localhost:${port}`);
+  console.log(`🚀 Server is running on http://localhost:${port}`);
 });
 

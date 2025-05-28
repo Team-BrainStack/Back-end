@@ -1,5 +1,4 @@
-
-import { auth } from "../../utils/auth.js";
+import auth from "../../utils/auth.js";
 import { createUnsecureRoute } from "../middlewares/session-middleware.js";
 
 export const authenticationRoutes = createUnsecureRoute();
