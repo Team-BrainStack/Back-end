@@ -1,7 +1,7 @@
+import { PrismaClient } from "../../generated/prisma/index.js";
 import { Hono } from "hono";
 import { z } from "zod";
 import { zValidator } from "@hono/zod-validator";
-import { PrismaClient } from "../../generated/prisma/index.js";
 
 const prisma = new PrismaClient();
 const memoryRouter = new Hono();
