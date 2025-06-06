@@ -1,21 +1,18 @@
 FROM node:22.1.0
-
+# Set working directory
 WORKDIR /app
-
-# Copy only needed files
+# Install pnpm globally
+RUN npm install -g pnpm
+# Copy dependency manifests
+COPY pnpm-lock.yaml ./
 COPY package*.json ./
 COPY tsconfig*.json ./
+COPY prisma ./prisma
+# Install dependencies with pnpm
+RUN pnpm install
 COPY src ./src
-
-# Copy Prisma folder only if it exists by copying everything, relying on .dockerignore
 COPY . .
-
-RUN npm install
-
-RUN if [ -f "./prisma/schema.prisma" ]; then npx prisma generate; else echo "Skipping prisma generate"; fi
-
-RUN pnpm run build
-
+RUN if [ -f "./prisma/schema.prisma" ]; then pnpm prisma generate; else echo "Skipping prisma generate"; fi
+RUN pnpm build
 EXPOSE 3000
-
-CMD ["pnpm", "start"]
+CMD ["node", "dist/index.js"]
