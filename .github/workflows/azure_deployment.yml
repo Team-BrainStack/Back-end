@@ -8,7 +8,7 @@ env:
   RESOURCE_GROUP: SecondBrain
   CONTAINER_APPS_ENVIRONMENT: SecondBrainContainerAppsEnvironment
   LOG_ANALYTICS_WORKSPACE: SecondBrainLogAnalyticsWorkspace
-  ACR_REGISTRY: secondbrain1si21ad048.azurecr.io # This has to be unique (at least the erbium bit)
+  ACR_REGISTRY: secondbrain1si21cs106.azurecr.io # This has to be unique (at least the erbium bit)
   ACR_REPOSITORY_NAME: secondbrain
   CONTAINER_APP_NAME: secondbrain
   TARGET_PORT: 3000
