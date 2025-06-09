@@ -1,24 +1,23 @@
 {
   "name": "my-app",
-  "type": "module",
   "scripts": {
     "dev": "tsx watch -r dotenv/config src/index.ts",
-    "build": "tsc -p tsconfig.build.json",
-    "start": "node dist/src/index.js"
+    "start": "tsx src/index.ts",
+    "build": "tsc -p tsconfig.build.json"
   },
   "dependencies": {
     "@hono/node-server": "^1.14.3",
     "@hono/zod-validator": "^0.6.0",
     "@prisma/client": "^6.8.2",
     "better-auth": "^1.2.8",
-    "dotenv": "^16.5.0",
     "hono": "^4.7.10",
+    "tsx": "^4.7.1",
     "zod": "^3.25.34"
   },
   "devDependencies": {
     "@types/node": "^20.11.17",
     "prisma": "^6.8.2",
-    "tsx": "^4.7.1",
+    "dotenv": "^16.5.0",
     "typescript": "^5.8.3"
   }
 }

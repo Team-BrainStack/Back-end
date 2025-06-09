@@ -1,8 +1,8 @@
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { username } from "better-auth/plugins";
-import { betterAuthSecret, serverUrl, webClientUrl } from "./environment/index.js";
-import { prismaClient } from "../integrations/prisma/index.js";
+import { betterAuthSecret, serverUrl, webClientUrl } from "./environment";
+import { prismaClient } from "../integrations/prisma";
 
 
 

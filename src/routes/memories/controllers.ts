@@ -1,5 +1,5 @@
-import { PrismaClient } from "../../generated/prisma/index.js";
-import type { CreateMemoryInput, Result, UpdateMemoryInput } from "./types.js";
+import { PrismaClient } from "../../generated/prisma";
+import type { CreateMemoryInput, Result, UpdateMemoryInput } from "./types";
 
 const prisma = new PrismaClient();
 
