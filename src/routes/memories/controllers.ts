@@ -1,6 +1,10 @@
 import { PrismaClient } from "../../generated/prisma";
+<<<<<<< HEAD
 import { pc } from "../../lib/pinecone";
 import type { CreateMemoryInput, Result, UpdateMemoryInput } from "./types.js";
+=======
+import type { CreateMemoryInput, Result, UpdateMemoryInput } from "./types";
+>>>>>>> 8013f1d20bff9c1f8e6a1f0166ee09aec98b30ef
 
 const prisma = new PrismaClient();
 

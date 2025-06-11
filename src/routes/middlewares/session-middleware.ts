@@ -2,7 +2,7 @@ import type { Session, User } from "better-auth";
 import { createMiddleware } from "hono/factory";
 import { HTTPException } from "hono/http-exception";
 import { Hono } from "hono";
-import auth from "../../utils/auth.js";
+import auth from "../../utils/auth";
 
 
 

@@ -1,4 +1,4 @@
-import auth from "./src/utils/auth.js";
+import auth from "./src/utils/auth";
 
 export default {
     auth: auth

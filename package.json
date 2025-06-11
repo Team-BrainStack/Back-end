@@ -1,10 +1,17 @@
 {
   "name": "my-app",
+<<<<<<< HEAD
   "version": "4.0.0",
   "scripts": {
     "dev": "tsx watch -r dotenv/config src/index.ts",
     "build": "tsc -p tsconfig.build.json",
     "start": "node dist/index.js"
+=======
+  "scripts": {
+    "dev": "tsx watch -r dotenv/config src/index.ts",
+    "start": "tsx src/index.ts",
+    "build": "tsc -p tsconfig.build.json"
+>>>>>>> 8013f1d20bff9c1f8e6a1f0166ee09aec98b30ef
   },
   "dependencies": {
     "@hono/node-server": "^1.14.3",
@@ -14,7 +21,10 @@
     "@prisma/client": "^6.8.2",
     "axios": "^1.9.0",
     "better-auth": "^1.2.8",
+<<<<<<< HEAD
     "express": "^5.1.0",
+=======
+>>>>>>> 8013f1d20bff9c1f8e6a1f0166ee09aec98b30ef
     "hono": "^4.7.10",
     "tsx": "^4.7.1",
     "zod": "^3.25.34"
@@ -25,6 +35,10 @@
     "@types/node": "^20.11.17",
     "dotenv": "^16.5.0",
     "prisma": "^6.8.2",
+<<<<<<< HEAD
+=======
+    "dotenv": "^16.5.0",
+>>>>>>> 8013f1d20bff9c1f8e6a1f0166ee09aec98b30ef
     "typescript": "^5.8.3"
   }
 }
