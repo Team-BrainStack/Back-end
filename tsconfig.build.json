@@ -9,5 +9,5 @@
     "allowImportingTsExtensions": false,
     "verbatimModuleSyntax": false
   },
-  "include": ["src"]
+"include": ["src", "src/generated"]
 }

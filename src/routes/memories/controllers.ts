@@ -1,13 +1,14 @@
-import { PrismaClient } from "../../generated/prisma/index.js";
+import { PrismaClient } from "../../generated/prisma";
+import { pc } from "../../lib/pinecone";
 import type { CreateMemoryInput, Result, UpdateMemoryInput } from "./types.js";
 
 const prisma = new PrismaClient();
 
-export const CreateMemory = async (
+/*export const CreateMemory = async (
   data: CreateMemoryInput
 ): Promise<Result<any>> => {
   try {
-    // Check if user exists
+     Check if user exists
     const userExists = await prisma.user.findUnique({
       where: { id: data.userId }
     });
@@ -37,12 +38,12 @@ export const CreateMemory = async (
         }
       }
     });
-    
+ 
     return { success: true, data: memory };
   } catch (e: any) {
     console.error("CreateMemory Error:", e);
     
-    // Handle Prisma unique constraint violation
+     Handle Prisma unique constraint violation
     if (e.code === 'P2002') {
       return {
         success: false,
@@ -55,7 +56,75 @@ export const CreateMemory = async (
       error: { message: "Failed to create memory", code: "CREATE_ERROR" },
     };
   }
-};
+};*/
+
+
+ export const CreateMemory = async (
+   data: CreateMemoryInput
+ ): Promise<Result<any>> => {
+   try {
+      //Check if user exists
+     const userExists = await prisma.user.findUnique({
+       where: { id: data.userId }
+     });
+
+     if (!userExists) {
+       return {
+         success: false,
+         error: { message: "User not found", code: "USER_NOT_FOUND" },
+       };
+     }
+
+     const memory = await prisma.memory.create({
+       data: {
+         userId: data.userId,
+         content: data.content,
+         title: data.title || null,
+         tags: data.tags || [],
+       },
+       include: {
+         user: {
+           select: {
+             id: true,
+             username: true,
+             name: true,
+             email: true,
+           }
+         }
+       }
+     });
+
+      //Insert into Pinecone
+     const index = pc.index("memories");
+     const namespace = index.namespace(memory.userId);
+     const records = [
+       {
+         id: memory.id,
+         text: memory.content,
+         title: memory.title || "",
+       },
+     ];
+     await namespace.upsertRecords(records);
+
+     return { success: true, data: memory };
+   } catch (e: any) {
+     console.error("CreateMemory Error:", e);
+
+      //Handle Prisma unique constraint violation
+     if (e.code === 'P2002') {
+       return {
+         success: false,
+         error: { message: "User already has a memory", code: "UNIQUE_CONSTRAINT_ERROR" },
+       };
+     }
+
+     return {
+       success: false,
+       error: { message: "Failed to create memory", code: "CREATE_ERROR" },
+     };
+   }
+ };
+
 
 export const GetAllMemories = async (): Promise<Result<any>> => {
   try {
@@ -153,7 +222,7 @@ export const UpdateMemoryById = async (
   data: UpdateMemoryInput
 ): Promise<Result<any>> => {
   try {
-    // Check if memory exists
+     //Check if memory exists
     const existingMemory = await prisma.memory.findUnique({
       where: { id }
     });
@@ -195,7 +264,7 @@ export const UpdateMemoryById = async (
 
 export const DeleteMemoryById = async (id: string): Promise<Result<any>> => {
   try {
-    // Check if memory exists
+     //Check if memory exists
     const existingMemory = await prisma.memory.findUnique({
       where: { id }
     });

@@ -1,4 +1,4 @@
-import { PrismaClient } from "../../generated/prisma/index.js";
+import { PrismaClient } from "../../generated/prisma";
 import { Hono } from "hono";
 import { z } from "zod";
 import { zValidator } from "@hono/zod-validator";
@@ -11,6 +11,7 @@ const memorySchema = z.object({
   userId: z.string().min(1, "User ID is required"),
   content: z.string().min(1, "Content is required"),
   title: z.string().optional(),
+  
   tags: z.array(z.string()).optional(),
 });
 
@@ -23,8 +24,7 @@ const updateMemorySchema = z.object({
 /* ------------------------- Routes ------------------------- */
 
 // Create a new memory
-memoryRouter.post(
-  "/create",
+memoryRouter.post( "/create",
   zValidator("json", memorySchema),
   async (c) => {
     const body = c.req.valid("json");
@@ -39,6 +39,36 @@ memoryRouter.post(
     }
   }
 );
+
+
+// memoryRouter.post("/create", async (c) => {
+//   try {
+//     const body = await c.req.json(); // Parse the body
+
+//     // ✅ Optional: validate manually if zod middleware is not present
+//     const parsed = memorySchema.safeParse(body);
+//     if (!parsed.success) {
+//       return c.json({ success: false, error: { message: "Invalid input", code: "INVALID_INPUT" } }, 400);
+//     }
+
+//     const result = await CreateMemory(parsed.data);
+
+//     if (result.success) {
+//       return c.json(result, 201);
+//     } else {
+//       const statusCode =
+//         result.error.code === "USER_NOT_FOUND"
+//           ? 404
+//           : result.error.code === "MEMORY_EXISTS"
+//           ? 409
+//           : 400;
+//       return c.json(result, statusCode);
+//     }
+//   } catch (err) {
+//     return c.json({ success: false, error: { message: "Server error", code: "INTERNAL_ERROR" } }, 500);
+//   }
+// });
+
 
 // Get all memories
 memoryRouter.get("/", async (c) => {
