@@ -2,7 +2,8 @@ import { PrismaClient } from "../../generated/prisma";
 import { Hono } from "hono";
 import { z } from "zod";
 import { zValidator } from "@hono/zod-validator";
-import { CreateMemory, DeleteMemoryById, GetAllMemories, GetMemoryById, GetMemoryByUserId, UpdateMemoryById } from "./controllers.js";
+import { CreateMemory, DeleteMemoryById, GetAllMemories, GetMemoryById, GetMemoryByUserId, searchMemories, UpdateMemoryById } from "./controllers.js";
+import { authenticationMiddleware } from "../middlewares/session-middleware.js";
 
 const memoryRouter = new Hono();
 
@@ -22,6 +23,29 @@ const updateMemorySchema = z.object({
 });
 
 /* ------------------------- Routes ------------------------- */
+
+const searchSchema = z.object({
+  q: z.string().min(1),
+});
+
+memoryRouter.get(
+  "/search",
+  authenticationMiddleware,
+  async (c) => {
+    const result = searchSchema.safeParse(c.req.query());
+    if (!result.success) {
+      return c.json({ error: "Invalid query parameters" }, 400);
+    }
+
+    const { q } = result.data;
+    const user = c.get("user")!;
+    const data = await searchMemories(q, user.id);
+
+    return c.json({ data });
+  },
+);
+
+
 
 // Create a new memory
 memoryRouter.post( "/create",

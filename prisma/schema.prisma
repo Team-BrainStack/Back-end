@@ -39,6 +39,26 @@ model Memory {
 
 }
 
+model ChatSession {
+  id        String     @id @default(cuid())
+  userId    String
+  title     String
+  messages  ChatMessage[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+}
+
+model ChatMessage {
+  id         String   @id @default(cuid())
+  chatId     String
+  role       String
+  content    String
+  createdAt  DateTime @default(now())
+
+  chat       ChatSession @relation(fields: [chatId], references: [id])
+}
+
+
 model Session {
   id        String   @id
   expiresAt DateTime

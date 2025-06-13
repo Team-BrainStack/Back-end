@@ -1,20 +1,46 @@
+import { Hono } from "hono";
 import { prismaClient } from "../integrations/prisma";
-import { createSecureRoute } from "../routes/middlewares/session-middleware";
+import { authenticationMiddleware, createSecureRoute } from "../routes/middlewares/session-middleware";
 import { mistral, pc } from "./pinecone";
+import { z } from "zod";
+
+type ChatMessage =
+  | { role: "system"; content: string }
+  | { role: "user"; content: string }
+  | { role: "assistant"; content: string }
+  | { role: "tool"; content: string };
 
 const chatRoutesmistral = createSecureRoute();
-chatRoutesmistral.get("/chat", async (c) => {
+
+const bodySchema = z.object({
+  query: z.string().min(3),
+  history: z
+    .array(
+      z.object({
+        role: z.enum(["user", "assistant"]),
+        content: z.string(),
+      })
+    )
+    .optional(),
+});
+
+chatRoutesmistral.post("/search", authenticationMiddleware, async (c) => {
   const user = c.get("user");
-  const { q: query } = c.req.query();
-  if (!query || query.trim() === "") {
-    return c.json({ success: false, message: "Query 'q' is required." }, 400);
+  const body = await c.req.json();
+  const parsed = bodySchema.safeParse(body);
+
+  if (!parsed.success) {
+    return c.json({ success: false, message: "Invalid input." }, 400);
   }
-  // Step 1: Search Pinecone for relevant memories
-  const namespace = pc.index("memories").namespace(user.id);
+
+  const { query, history } = parsed.data;
+
+  // 🔍 Step 1: Search Pinecone for top relevant memory IDs
+  const namespace = pc.index("second-brain").namespace(user.id);
   const pineconeResponse = await namespace.searchRecords({
     query: {
       inputs: { text: query },
-      topK: 20, // broader search
+      topK: 20,
     },
     rerank: {
       model: "bge-reranker-v2-m3",
@@ -22,48 +48,75 @@ chatRoutesmistral.get("/chat", async (c) => {
       rankFields: ["text"],
     },
   });
-  // Step 2: Filter hits based on score
-  const relevantHits = pineconeResponse.result.hits.filter(
-    (hit) => hit._score && hit._score >= 0.2
-  );
+
+  // 🎯 Step 2: Filter hits by score
+  const relevantHits = pineconeResponse.result.hits
+    .filter((hit) => hit._score && hit._score >= 0.1)
+    .slice(0, 5);
+
   const ids = relevantHits.map((hit) => hit._id);
-  // Step 3: Fetch full memory data from Supabase (via Prisma)
+
+  // 🧠 Step 3: Fetch corresponding memories from DB
   const memoryRecords = await prismaClient.memory.findMany({
     where: {
       id: { in: ids },
       userId: user.id,
     },
   });
+
   const memoryMap = new Map(memoryRecords.map((m) => [m.id, m]));
+
   const results = relevantHits
     .map((hit) => memoryMap.get(hit._id))
-    .filter((m): m is NonNullable<typeof m> => Boolean(m)); // Type narrowing
-  // Step 4: Construct context for Mistral
+    .filter((m): m is NonNullable<typeof m> => Boolean(m));
+
   const contextText = results
     .map((m) => `- ${m.title || "Untitled"}: ${m.content}`)
     .join("\n");
-  const prompt = `
-## QUERY
+
+  // 🧠 Build Chat Message History
+  const safeHistory: ChatMessage[] = (history ?? []).map((msg) => ({
+    role: msg.role,
+    content: msg.content,
+  }));
+
+  const messages: ChatMessage[] = [
+    ...safeHistory,
+    {
+      role: "user",
+      content: `
+You are MemoryVault, an intelligent assistant answering based on the user's saved memories only.
+
+## USER QUESTION:
 ${query}
----
-## CONTEXT
+
+## CONTEXT FROM SAVED MEMORIES:
 ${contextText}
-`.trim();
-  // Step 5: Mistral API for answer
+
+Answer clearly and concisely using only the context.
+      `.trim(),
+    },
+  ];
+
+  // 🤖 Step 4: Ask Mistral for a response
   const response = await mistral.chat.complete({
-    model: "mistral-small-latest",
-    messages: [{ role: "user", content: prompt }],
+    model: "mistral-large-latest",
+    messages,
   });
-  const summary = response.choices?.[0]?.message?.content || "No summary generated.";
+
+  const answer =
+    response.choices?.[0]?.message?.content || "No answer generated.";
+
   return c.json({
     success: true,
     query,
-    summary,
-    results,
+    answer,
+    references: results,
     meta: {
       count: results.length,
       threshold: 0.2,
     },
   });
 });
+
 export default chatRoutesmistral;

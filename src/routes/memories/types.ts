@@ -19,3 +19,8 @@ export type UpdateMemoryInput = {
   title?: string;
   tags?: string[];
 };
+
+export type MemoryMetadata = {
+  title: string;
+  text: string;
+};

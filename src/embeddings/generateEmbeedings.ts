@@ -59,4 +59,3 @@ export async function generateEmbedding(text: string) {
     throw error;
   }
 }
-

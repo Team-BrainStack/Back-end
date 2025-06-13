@@ -1,27 +1,16 @@
-import { PrismaClient } from "../../generated/prisma";
-<<<<<<< HEAD
+import { Prisma, PrismaClient } from "../../generated/prisma";
 import { pc } from "../../lib/pinecone";
-import type { CreateMemoryInput, Result, UpdateMemoryInput } from "./types.js";
-=======
-import type { CreateMemoryInput, Result, UpdateMemoryInput } from "./types";
->>>>>>> 8013f1d20bff9c1f8e6a1f0166ee09aec98b30ef
+import type { CreateMemoryInput, MemoryMetadata, Result, UpdateMemoryInput } from "./types";
 
 const prisma = new PrismaClient();
 
-/*export const CreateMemory = async (
+export const CreateMemory = async (
   data: CreateMemoryInput
 ): Promise<Result<any>> => {
   try {
-     Check if user exists
-    const userExists = await prisma.user.findUnique({
-      where: { id: data.userId }
-    });
-
+    const userExists = await prisma.user.findUnique({ where: { id: data.userId } });
     if (!userExists) {
-      return {
-        success: false,
-        error: { message: "User not found", code: "USER_NOT_FOUND" },
-      };
+      return { success: false, error: { message: "User not found", code: "USER_NOT_FOUND" } };
     }
 
     const memory = await prisma.memory.create({
@@ -31,104 +20,30 @@ const prisma = new PrismaClient();
         title: data.title || null,
         tags: data.tags || [],
       },
-      include: {
-        user: {
-          select: {
-            id: true,
-            username: true,
-            name: true,
-            email: true,
-          }
-        }
-      }
     });
- 
+
+    // ✅ Pinecone upsert with integrated embeddings
+    await pc
+  .index<MemoryMetadata>("second-brain")
+  .namespace(memory.userId)
+  .upsertRecords([
+    {
+      id: memory.id,
+      title: memory.title || "",
+      text: memory.content,
+    },
+  ]);
+
+
     return { success: true, data: memory };
   } catch (e: any) {
     console.error("CreateMemory Error:", e);
-    
-     Handle Prisma unique constraint violation
-    if (e.code === 'P2002') {
-      return {
-        success: false,
-        error: { message: "User already has a memory", code: "UNIQUE_CONSTRAINT_ERROR" },
-      };
-    }
-    
     return {
       success: false,
       error: { message: "Failed to create memory", code: "CREATE_ERROR" },
     };
   }
-};*/
-
-
- export const CreateMemory = async (
-   data: CreateMemoryInput
- ): Promise<Result<any>> => {
-   try {
-      //Check if user exists
-     const userExists = await prisma.user.findUnique({
-       where: { id: data.userId }
-     });
-
-     if (!userExists) {
-       return {
-         success: false,
-         error: { message: "User not found", code: "USER_NOT_FOUND" },
-       };
-     }
-
-     const memory = await prisma.memory.create({
-       data: {
-         userId: data.userId,
-         content: data.content,
-         title: data.title || null,
-         tags: data.tags || [],
-       },
-       include: {
-         user: {
-           select: {
-             id: true,
-             username: true,
-             name: true,
-             email: true,
-           }
-         }
-       }
-     });
-
-      //Insert into Pinecone
-     const index = pc.index("memories");
-     const namespace = index.namespace(memory.userId);
-     const records = [
-       {
-         id: memory.id,
-         text: memory.content,
-         title: memory.title || "",
-       },
-     ];
-     await namespace.upsertRecords(records);
-
-     return { success: true, data: memory };
-   } catch (e: any) {
-     console.error("CreateMemory Error:", e);
-
-      //Handle Prisma unique constraint violation
-     if (e.code === 'P2002') {
-       return {
-         success: false,
-         error: { message: "User already has a memory", code: "UNIQUE_CONSTRAINT_ERROR" },
-       };
-     }
-
-     return {
-       success: false,
-       error: { message: "Failed to create memory", code: "CREATE_ERROR" },
-     };
-   }
- };
-
+};
 
 export const GetAllMemories = async (): Promise<Result<any>> => {
   try {
@@ -226,16 +141,9 @@ export const UpdateMemoryById = async (
   data: UpdateMemoryInput
 ): Promise<Result<any>> => {
   try {
-     //Check if memory exists
-    const existingMemory = await prisma.memory.findUnique({
-      where: { id }
-    });
-
-    if (!existingMemory) {
-      return {
-        success: false,
-        error: { message: "Memory not found", code: "NOT_FOUND" },
-      };
+    const existing = await prisma.memory.findUnique({ where: { id } });
+    if (!existing) {
+      return { success: false, error: { message: "Memory not found", code: "NOT_FOUND" } };
     }
 
     const memory = await prisma.memory.update({
@@ -244,20 +152,26 @@ export const UpdateMemoryById = async (
         ...data,
         updatedAt: new Date(),
       },
-      include: {
-        user: {
-          select: {
-            id: true,
-            username: true,
-            name: true,
-            email: true,
-          }
-        }
-      }
     });
-    
+
+    // ✅ Re-index content if updated
+    // For UpdateMemoryById
+if (data.content) {
+  await pc
+  .index<MemoryMetadata>("second-brain")
+  .namespace(memory.userId)
+  .upsertRecords([
+    {
+      id: memory.id,
+      title: memory.title || "",
+      text: memory.content,
+    },
+  ]);
+}
+
+
     return { success: true, data: memory };
-  } catch (e) {
+  } catch (e: any) {
     console.error("UpdateMemoryById Error:", e);
     return {
       success: false,
@@ -289,4 +203,28 @@ export const DeleteMemoryById = async (id: string): Promise<Result<any>> => {
       error: { message: "Failed to delete memory", code: "DELETE_ERROR" },
     };
   }
+};
+
+
+
+export const searchMemories = async (
+  query: string,
+  userId: string,
+) => {
+  const filter = {
+    userId,
+    OR: [
+      { title: { contains: query, mode: Prisma.QueryMode.insensitive } },
+      { content: { contains: query, mode: Prisma.QueryMode.insensitive } },
+      { tags: { has: query } },
+    ],
+  };
+
+  const memories = await prisma.memory.findMany({
+    where: filter,
+    include: { user: { select: { id: true, username: true } } },
+    orderBy: { createdAt: "desc" },
+  });
+
+  return memories;
 };

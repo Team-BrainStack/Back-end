@@ -1,10 +1,8 @@
 import type { Session, User } from "better-auth";
-import { createMiddleware } from "hono/factory";
-import { HTTPException } from "hono/http-exception";
 import { Hono } from "hono";
+import { createMiddleware } from "hono/factory";
 import auth from "../../utils/auth";
-
-
+import { HTTPException } from "hono/http-exception";
 
 export type SecureSession = {
   Variables: {
@@ -28,12 +26,15 @@ export const createSecureRoute = (): Hono<SecureSession> => {
   return route;
 };
 
-export const authenticationMiddleware = createMiddleware<SecureSession>(async (context, next) => {
-  const session = await auth.api.getSession({ headers: context.req.raw.headers });
+export const authenticationMiddleware = createMiddleware<SecureSession>(
+  async (context, next) => {
+    const session = await auth.api.getSession({
+      headers: context.req.raw.headers,
+    });
 
-  if (!session) {
-    throw new HTTPException(401);
-  }
+    if (!session) {
+      throw new HTTPException(401);
+    }
 
   context.set("user", session.user as User);
   context.set("session", session.session as Session);

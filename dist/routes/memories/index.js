@@ -31,6 +31,30 @@ memoryRouter.post("/create", (0, zod_validator_1.zValidator)("json", memorySchem
         return c.json(result, statusCode);
     }
 });
+// memoryRouter.post("/create", async (c) => {
+//   try {
+//     const body = await c.req.json(); // Parse the body
+//     // ✅ Optional: validate manually if zod middleware is not present
+//     const parsed = memorySchema.safeParse(body);
+//     if (!parsed.success) {
+//       return c.json({ success: false, error: { message: "Invalid input", code: "INVALID_INPUT" } }, 400);
+//     }
+//     const result = await CreateMemory(parsed.data);
+//     if (result.success) {
+//       return c.json(result, 201);
+//     } else {
+//       const statusCode =
+//         result.error.code === "USER_NOT_FOUND"
+//           ? 404
+//           : result.error.code === "MEMORY_EXISTS"
+//           ? 409
+//           : 400;
+//       return c.json(result, statusCode);
+//     }
+//   } catch (err) {
+//     return c.json({ success: false, error: { message: "Server error", code: "INTERNAL_ERROR" } }, 500);
+//   }
+// });
 // Get all memories
 memoryRouter.get("/", async (c) => {
     const result = await (0, controllers_js_1.GetAllMemories)();
